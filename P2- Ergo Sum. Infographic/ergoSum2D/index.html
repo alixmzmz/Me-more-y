@@ -1,0 +1,184 @@
+<!--
+PROGRAM TO REPRESENT IN AN INPHOGRAPHIC ALL THE PEOPLE I CAN REMEMBER IN MY LIFE
+
+Tutorials used to do this piece
+How to D3 Force Directed Layout Graph - https://www.youtube.com/watch?v=HP1tOlxVYz4
+Force-Directed Graph - https://bl.ocks.org/mbostock/4062045
+
+Specific behaviours tutorial links showed inline
+-->
+
+<DOCTYPE html>
+  <meta charset = "utf-8">
+  <!-- http://www.cssfontstack.com/Maven-Pro -->
+  <link rel="stylesheet" type="text/css" href="//fonts.googleapis.com/css?family=Maven+Pro" />
+
+  <link rel="stylesheet" type="text/css" href="style.css">
+
+  <body>
+
+    <div id="underwater"></div>
+    <script src= "http://d3js.org//d3.v3.min.js"></script>
+    <script>
+
+    var width = window.innerWidth;
+    height = window.innerHeight;
+
+    //var url = "http://storageName.blob.core.windows.net/containerName/file.json";
+
+    // LOAD LOCAL json = https://bl.ocks.org/mbostock/4062045
+    //d3.json("ergosum.json", function (json) {
+
+    // LOAD REMOTE GOOGLE SPREADSHEET json
+    // http://pipetree.com/qmacro/blog/2013/10/04/sheetasjson-google-spreadsheet-data-as-json/
+    d3.json("https://script.googleusercontent.com/macros/echo?user_content_key=VmkkBkrI7dRh1pmJOVt_qmTM7f2b6U8IPDMhIyl6qDCu7dFy-Qski92olBMgN8AVKmXBSuEe8yS_X5P4oQXrGTtFOXrBNDICOJmA1Yb3SEsKFZqtv3DaNYcMrmhZHmUMWojr9NvTBuBLhyHCd5hHa0fnhNOx0Ow92_YI4rPqcBlNhhLv7hexLy59DC9dflQLqZV46-Z6SFW9lmyXvj_BD2LvF45J6BTkLnivYWCPhxhJua7SC-3WMGx6_Ffe3Un31cw7r8lXlVO37IwazBz5xzbBQR0mtaOM&lib=M2pvbKG4PsZSw6uJJg5VSoH79Txk7FZAn", function (json) {
+
+      // console.log(json); -- read on the console the json content
+      var links = json.links; // assign json to the variable links
+      var nodes = {}; // empty array of nodes
+
+      /* ............... LINKS ..................*/
+
+      // goes through each link in links to extract all nodes
+      // parse links to nodes
+      links.forEach(function(link){  // fill the array with links content (source and target nodes from links)
+        // link composed of source + target
+        console.log(link.target);
+
+        link.source = nodes[link.source] ||
+        (nodes[link.source] = { group: link.group,
+          location: link.location,
+          weight:  link.weight,
+          name: link.source,
+          facebook: link.facebook,
+          linkedin: link.linkedin,
+          instagram: link.instagram,
+          alive: link.alive,
+          text: link.text,
+          image: link.image
+        });
+        link.target = nodes[link.target] ||
+        (nodes[link.target] = {
+          group: link.group,
+          location: link.location,
+          weight:  link.weight,
+          name: link.target,
+          facebook: link.facebook,
+          linkedin: link.linkedin,
+          instagram: link.instagram,
+          alive: link.alive,
+          text: link.text,
+          image: link.image
+        });
+      });
+
+      /* ............... SVG - adding svg to the body..................*/
+
+      var svg = d3.select('body').append('svg')
+      .attr('width', width)
+      .attr('height', height);
+
+      /* ............... DRAG & ZOOM = https://bl.ocks.org/mbostock/6123708 ..................*/
+
+      // http://plnkr.co/edit/0Zfcx4ZrwMugemghByfO?p=preview
+      var rectForZoom = svg.append("rect")
+      .attr("width", width)
+      .attr("height", height)
+      .style("fill", "none")
+      .style("pointer-events", "all");
+
+      var zoom = d3.behavior.zoom()
+      .translate([0,0])
+      .scale(1)
+      .scaleExtent([1, 10])
+      .on("zoom", zoomed);
+      svg.call(zoom);
+
+      function zoomed() {
+        svg.attr("transform", "translate(" + d3.event.translate + ")scale(" + d3.event.scale + ")");
+        updateWindow();
+      }
+
+      /* ............... FORCE GRAPH - adding force simulation ..................*/
+      var force = d3.layout.force()
+      .size([width, height])
+      .nodes(d3.values(nodes))
+      .links(links)
+      .on("tick", tick) // update - physics
+      .linkDistance(400)
+      .charge(-600)
+      .start();
+
+      /* ............... LINKS - adding links between nodes..................*/
+
+      var link = svg.selectAll('.link') // generate all links
+      .data(links)
+      .enter().append('line') // add object line in svg
+      .attr('class', 'link'); // add link class
+
+      /* ............... NODES - start group ..................*/
+
+      // node = each of the elements of the array
+      // for each node a group will be created (.append('g'))
+      var node = svg.selectAll('.node')
+      .data(force.nodes())
+      .enter().append('g') // g = group (element of the SVG)
+      .attr('class', 'node')
+      .call(force.drag);
+
+      /* ............... CIRCLES - adding circles for nodes ..................*/
+      // for each group include a circle
+      // circle WEIGHT property
+      // https://stackoverflow.com/questions/17077680/how-to-access-weight-property-of-a-node-in-a-force-layout
+      node.append("circle")
+      .attr('class', function(d) { return d.group }) // d = data
+      .attr("r", function(d) {return d.weight * 0.05}); // r = radius
+
+      /* ............... TEXT - adding texts ..................*/
+      node.append("text")
+      .attr("dx", 12)
+      .attr("dy", ".35em")
+      .text(function(d) { return d.name });
+
+      /* ............... NODES - end group ......................*/
+
+      /* ............... TOOLTIP - adding fixed tooltip http://bl.ocks.org/d3noob/a22c42db65eb00d4e369 ......................
+
+      // Define the div for the tooltip
+      var tooltip = d3.select("body").append("div")
+      .attr("class", "tooltip");
+
+      node.on("mouseover", function(d) {
+        console.log(d);
+        tooltip.html(d.name + " " + d.location);
+      })
+      .on("mouseout", function(d) {
+        tooltip.html("Nada surf");
+      });
+      */
+
+
+      /* ............... TICK = each d3 Update to animate ..................*/
+
+      function tick(e) {
+        node.attr("transform",
+        function(d) { return "translate(" + d.x + "," + d.y + ")"; });
+
+        link.attr('x1', function(d) {return d.source.x; })
+        .attr('y1', function(d) {return d.source.y; })
+        .attr('x2', function(d) {return d.target.x; })
+        .attr('y2', function(d) {return d.target.y; });
+      }
+
+      // Window resize
+      // https://stackoverflow.com/questions/16265123/resize-svg-when-window-is-resized-in-d3-js
+      function updateWindow(){
+        x = window.innerWidth || e.clientWidth || g.clientWidth;
+        y = window.innerHeight|| e.clientHeight|| g.clientHeight;
+
+        svg.attr("width", x).attr("height", y);
+      }
+      d3.select(window).on('resize.updatesvg', updateWindow);
+    });
+    </script>
+  </body>
