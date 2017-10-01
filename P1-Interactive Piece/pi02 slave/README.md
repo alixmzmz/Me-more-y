@@ -1,3 +1,7 @@
+# Me-more-y
+## P1 - Interactive Piece
+
+### Pi02 Slave
 Python scripts require:
 
 	•	pyomxplayer - https://github.com/jbaiter/pyomxplayer

@@ -1,6 +1,6 @@
 # Me-more-y
 
-## Ergo-sum
+## P2 - Ergo-sum
 
 ### 2D Version - ergoSum2D
 To run just open ```index.html``` on your browser

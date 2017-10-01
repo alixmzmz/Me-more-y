@@ -1,17 +1,17 @@
-Animations
-===========
+# Me-more-y
+## P1 - Interactive Piece
+
+### Animations
 
 Done in Processing - http://processing.org
 
 
-OSC Layout for TouchOSC
-=======================
+### OSC Layout for TouchOSC
 
 iPad layout for TouchOSC done in TouchOSC editor - https://hexler.net/touchosc
 
 
-PiWall code
-===========
+### PiWall code
 
 Pi01 master - Contains button and piWall code in Python
 -------------------------------------------------------
